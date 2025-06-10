@@ -1,0 +1,15 @@
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\bin\Debug\net9.0\GitHubUserActivityCLI.exe
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\bin\Debug\net9.0\GitHubUserActivityCLI.deps.json
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\bin\Debug\net9.0\GitHubUserActivityCLI.runtimeconfig.json
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\bin\Debug\net9.0\GitHubUserActivityCLI.dll
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\bin\Debug\net9.0\GitHubUserActivityCLI.pdb
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\obj\Debug\net9.0\GitHubUserActivityCLI.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\obj\Debug\net9.0\GitHubUserActivityCLI.AssemblyInfoInputs.cache
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\obj\Debug\net9.0\GitHubUserActivityCLI.AssemblyInfo.cs
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\obj\Debug\net9.0\GitHubUserActivityCLI.csproj.CoreCompileInputs.cache
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\obj\Debug\net9.0\GitHubUserActivityCLI.sourcelink.json
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\obj\Debug\net9.0\GitHubUserActivityCLI.dll
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\obj\Debug\net9.0\refint\GitHubUserActivityCLI.dll
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\obj\Debug\net9.0\GitHubUserActivityCLI.pdb
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\obj\Debug\net9.0\GitHubUserActivityCLI.genruntimeconfig.cache
+C:\Users\USER-PC\Documents\projects\GitHub-User-Activity\GitHubUserActivityCLI\obj\Debug\net9.0\ref\GitHubUserActivityCLI.dll
