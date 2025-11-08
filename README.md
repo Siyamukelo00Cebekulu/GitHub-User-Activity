@@ -18,27 +18,30 @@ It’s designed as a small but practical tool to showcase programming fundamenta
 
 1. ✍ **User Input**
 
-The user runs the program and enters a GitHub username.
+    The user runs the program and enters a GitHub username.
 
 2. ⌯⌲**Send API Request**
 
-The program constructs a request to the GitHub API endpoint and sends it using HttpClient :
+    The program constructs a request to the GitHub API endpoint and sends it using HttpClient:
 
 ```bash
 https://api.github.com/users/{username}/events
 ```
 
 3. 📥**Receive JSON Response**
-- The GitHub API returns a JSON array containing a list of recent events (e.g., pushes, pull requests, stars).
+
+    The GitHub API returns a JSON array containing a list of recent events (e.g., pushes, pull requests, stars).
 
 4. ☰**Parse & Filter Data**
-The JSON data is deserialized and filtered to show only relevant fields such as:
-- Event type (PushEvent, PullRequestEvent, etc.)
-- Repository name
-- Event creation date
+
+    The JSON data is deserialized and filtered to show only relevant fields such as:
+    - Event type (PushEvent, PullRequestEvent, etc.)
+    - Repository name
+    - Event creation date
 
 5. 📜 **Display Results**
-The program formats and prints the data neatly to the terminal, providing a clear summary of the user’s latest activity.
+
+    The program formats and prints the data neatly to the terminal, providing a clear summary of the user’s latest activity.
 
 ## 🧰 Technologies Used
 
