@@ -16,11 +16,11 @@ It’s designed as a small but practical tool to showcase programming fundamenta
 
 ## 🔁 Program Flow
 
-1. ✍ User Input
+1. ✍ **User Input**
 
 The user runs the program and enters a GitHub username.
 
-2. ⌯⌲⌯⌲Send API Request
+2. ⌯⌲**Send API Request**
 
 The program constructs a request to the GitHub API endpoint and sends it using HttpClient :
 
@@ -28,17 +28,16 @@ The program constructs a request to the GitHub API endpoint and sends it using H
 https://api.github.com/users/{username}/events
 ```
 
-3. 📥Receive JSON Response
+3. 📥**Receive JSON Response**
 - The GitHub API returns a JSON array containing a list of recent events (e.g., pushes, pull requests, stars).
 
-4. ☰☰Parse & Filter Data
+4. ☰**Parse & Filter Data**
 The JSON data is deserialized and filtered to show only relevant fields such as:
-
 - Event type (PushEvent, PullRequestEvent, etc.)
 - Repository name
 - Event creation date
 
-5. 📜 Display Results
+5. 📜 **Display Results**
 The program formats and prints the data neatly to the terminal, providing a clear summary of the user’s latest activity.
 
 ## 🧰 Technologies Used
@@ -51,7 +50,7 @@ The program formats and prints the data neatly to the terminal, providing a clea
 ## 🧑‍💻 Example Output
 
 ```yaml
-nter GitHub username: Siyamukelo00Cebekulu
+Enter GitHub username: Siyamukelo00Cebekulu
 Fetching recent activity...
 
 [1] PushEvent on repo: Siyamukelo00Cebekulu/TaskTracker
