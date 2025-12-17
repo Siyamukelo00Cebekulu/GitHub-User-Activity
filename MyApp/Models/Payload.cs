@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 
+
+
 public class Payload
 {
     [JsonPropertyName("action")]
@@ -27,11 +29,23 @@ public class Payload
     public int? DistinctSize { get; set; }
 
     [JsonPropertyName("issue")]
-    public object? Issue { get; set; }  // Could be typed as IssuePayload
+    public object? Issue { get; set; }
 
     [JsonPropertyName("pull_request")]
-    public object? PullRequest { get; set; }  // Could be typed as PullRequestPayload
+    public object? PullRequest { get; set; }
 
     [JsonPropertyName("comment")]
-    public object? Comment { get; set; }  // Could be typed as CommentPayload
+    public object? Comment { get; set; }
+
+    [JsonPropertyName("repository")]
+    public Repository? Repository { get; set; }
+
+    [JsonPropertyName("member")]
+    public object? Member { get; set; }
+
+    [JsonPropertyName("release")]
+    public object? Release { get; set; }
+
+    [JsonPropertyName("forkee")]
+    public object? Forkee { get; set; }
 }
