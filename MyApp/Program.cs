@@ -38,7 +38,7 @@ class Program
     {
         if (string.IsNullOrWhiteSpace(username))
         {
-            Console.WriteLine("Error: GitHub username is required.");
+            Console.WriteLine("Error: GitHub username is required");
             Console.WriteLine("Usage: github-activity <username>");
             Console.WriteLine("       github-activity --username <username>");
             return;
