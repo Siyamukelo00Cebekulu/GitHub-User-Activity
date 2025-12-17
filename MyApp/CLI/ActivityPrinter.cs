@@ -2,6 +2,7 @@ using System.Text;
 
 public interface IActivityPrinter
 {
+    
     void PrintActivities(List<GitHubEvent> events);
 }
 
@@ -111,7 +112,7 @@ public class ActivityPrinter : IActivityPrinter
         // Group by branch and get the most common one
         var branchGroups = pushEvents
             .Where(e => !string.IsNullOrEmpty(e.Payload?.Ref))
-            .GroupBy(e => GetBranchName(e.Payload.Ref))
+            .GroupBy(e => GetBranchName(e.Payload?.Ref))
             .Where(g => !string.IsNullOrEmpty(g.Key))
             .OrderByDescending(g => g.Count())
             .ToList();
