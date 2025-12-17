@@ -1,7 +1,6 @@
 using System.Text.Json.Serialization;
 
 
-
 public class Payload
 {
     [JsonPropertyName("action")]
@@ -48,4 +47,23 @@ public class Payload
 
     [JsonPropertyName("forkee")]
     public object? Forkee { get; set; }
+
+    // Add missing properties from the JSON
+    [JsonPropertyName("repository_id")]
+    public long? RepositoryId { get; set; }
+
+    [JsonPropertyName("head")]
+    public string? Head { get; set; }
+
+    [JsonPropertyName("before")]
+    public string? Before { get; set; }
+
+    [JsonPropertyName("full_ref")]
+    public string? FullRef { get; set; }
+
+    [JsonPropertyName("master_branch")]
+    public string? MasterBranch { get; set; }
+
+    [JsonPropertyName("pusher_type")]
+    public string? PusherType { get; set; }
 }

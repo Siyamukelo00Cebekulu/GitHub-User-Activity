@@ -1,6 +1,5 @@
 using System.Text;
 
-
 public interface IActivityPrinter
 {
     void PrintActivities(List<GitHubEvent> events);
@@ -8,7 +7,7 @@ public interface IActivityPrinter
 
 public class ActivityPrinter : IActivityPrinter
 {
-    private const int MaxActivitiesToShow = 15;
+    private const int MaxActivitiesToShow = 20;
 
     public void PrintActivities(List<GitHubEvent> events)
     {
@@ -20,240 +19,248 @@ public class ActivityPrinter : IActivityPrinter
 
         Console.WriteLine($"Recent GitHub Activity:\n");
 
-        int count = 0;
-        foreach (var activity in events)
-        {
-            if (count >= MaxActivitiesToShow)
-                break;
+        // Group activities by type and repository
+        var groupedActivities = GroupActivities(events);
 
-            var description = GetActivityDescription(activity);
-            if (!string.IsNullOrEmpty(description))
-            {
-                Console.WriteLine($"- {description}");
-                count++;
-            }
+        // Print grouped activities
+        foreach (var group in groupedActivities)
+        {
+            Console.WriteLine($"- {group}");
         }
 
-        if (count == 0)
+        if (groupedActivities.Count == 0)
         {
             Console.WriteLine("No recognizable activity found in the recent events.");
         }
     }
 
-    private string GetActivityDescription(GitHubEvent activity)
+    private List<string> GroupActivities(List<GitHubEvent> events)
+    {
+        var results = new List<string>();
+        
+        // Group push events by repository
+        var pushGroups = events
+            .Where(e => e.Type == "PushEvent")
+            .GroupBy(e => e.Repository?.Name ?? "unknown")
+            .Select(g => new
+            {
+                RepoName = g.Key,
+                TotalCommits = g.Sum(e => GetCommitCountForPush(e)),
+                Branch = GetMostCommonBranch(g.ToList()),
+                EventCount = g.Count()
+            })
+            .Where(g => g.TotalCommits > 0)
+            .ToList();
+
+        // Add grouped push events
+        foreach (var pushGroup in pushGroups)
+        {
+            var branchInfo = string.IsNullOrEmpty(pushGroup.Branch) ? "" : $" ({pushGroup.Branch})";
+            results.Add($"Pushed {pushGroup.TotalCommits} commit{(pushGroup.TotalCommits != 1 ? "s" : "")} to {pushGroup.RepoName}{branchInfo}");
+        }
+
+        // Handle other event types (non-push events)
+        var otherEvents = events
+            .Where(e => e.Type != "PushEvent")
+            .OrderByDescending(e => e.CreatedAt)
+            .Take(MaxActivitiesToShow - pushGroups.Count)
+            .ToList();
+
+        foreach (var activity in otherEvents)
+        {
+            var description = GetSingleActivityDescription(activity);
+            if (!string.IsNullOrEmpty(description))
+            {
+                results.Add(description);
+            }
+        }
+
+        return results.Take(MaxActivitiesToShow).ToList();
+    }
+
+    private int GetCommitCountForPush(GitHubEvent pushEvent)
+    {
+        // Try multiple ways to get commit count
+        if (pushEvent.Payload?.Commits?.Count > 0)
+        {
+            return pushEvent.Payload.Commits.Count;
+        }
+        else if (pushEvent.Payload?.Size > 0)
+        {
+            return pushEvent.Payload.Size.Value;
+        }
+        else if (pushEvent.Payload?.DistinctSize > 0)
+        {
+            return pushEvent.Payload.DistinctSize.Value;
+        }
+        // If we have both head and before SHAs, it's at least 1 commit
+        else if (!string.IsNullOrEmpty(pushEvent.Payload?.Head) && 
+                 !string.IsNullOrEmpty(pushEvent.Payload?.Before))
+        {
+            return 1;
+        }
+        
+        return 0;
+    }
+
+    private string GetMostCommonBranch(List<GitHubEvent> pushEvents)
+    {
+        if (!pushEvents.Any())
+            return string.Empty;
+
+        // Group by branch and get the most common one
+        var branchGroups = pushEvents
+            .Where(e => !string.IsNullOrEmpty(e.Payload?.Ref))
+            .GroupBy(e => GetBranchName(e.Payload.Ref))
+            .Where(g => !string.IsNullOrEmpty(g.Key))
+            .OrderByDescending(g => g.Count())
+            .ToList();
+
+        return branchGroups.Any() ? branchGroups.First().Key : string.Empty;
+    }
+
+    private string GetSingleActivityDescription(GitHubEvent activity)
     {
         var repoName = activity.Repository?.Name ?? "unknown repository";
-        var actorName = activity.Actor?.Login ?? "someone";
         
         try
         {
             return activity.Type switch
             {
-                "PushEvent" => GetPushEventDescription(activity, repoName),
-                "IssuesEvent" => GetIssueEventDescription(activity, repoName),
-                "IssueCommentEvent" => GetIssueCommentEventDescription(activity, repoName),
-                "WatchEvent" => $"⭐ Starred {repoName}",
                 "CreateEvent" => GetCreateEventDescription(activity, repoName),
-                "DeleteEvent" => GetDeleteEventDescription(activity, repoName),
-                "ForkEvent" => $"🍴 Forked {repoName}",
+                "PublicEvent" => $"Made repository {repoName} public",
+                "IssuesEvent" => GetIssueEventDescription(activity, repoName),
+                "IssueCommentEvent" => $"Commented on an issue in {repoName}",
+                "WatchEvent" => $"Starred {repoName}",
+                "ForkEvent" => $"Forked {repoName}",
                 "PullRequestEvent" => GetPullRequestEventDescription(activity, repoName),
-                "PullRequestReviewEvent" => GetPullRequestReviewEventDescription(activity, repoName),
-                "PullRequestReviewCommentEvent" => $"💬 Reviewed a pull request in {repoName}",
-                "CommitCommentEvent" => $"💬 Commented on a commit in {repoName}",
+                "PullRequestReviewEvent" => $"Reviewed a pull request in {repoName}",
+                "PullRequestReviewCommentEvent" => $"Commented on a pull request review in {repoName}",
+                "CommitCommentEvent" => $"Commented on a commit in {repoName}",
                 "ReleaseEvent" => GetReleaseEventDescription(activity, repoName),
                 "MemberEvent" => GetMemberEventDescription(activity, repoName),
-                "PublicEvent" => $"📢 Made {repoName} public",
-                "GollumEvent" => $"📝 Updated wiki in {repoName}",
-                "ProjectCardEvent" => $"📋 Updated project card in {repoName}",
-                "ProjectColumnEvent" => $"📋 Updated project column in {repoName}",
-                "ProjectEvent" => $"📋 Updated project in {repoName}",
-                "TeamAddEvent" => $"👥 Added to team in {repoName}",
-                "OrganizationEvent" => GetOrganizationEventDescription(activity, repoName),
+                "GollumEvent" => $"Updated wiki in {repoName}",
+                "DeleteEvent" => GetDeleteEventDescription(activity, repoName),
+                "ProjectEvent" => $"Updated project in {repoName}",
+                "TeamAddEvent" => $"Added to team in {repoName}",
                 _ => GetGenericEventDescription(activity, repoName)
             };
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"Error processing activity: {ex.Message}");
-            return $"Performed {activity.Type.ToLower()} in {repoName}";
+            return $"Performed {activity.Type.Replace("Event", "").ToLower()} in {repoName}";
         }
-    }
-
-    private string GetPushEventDescription(GitHubEvent activity, string repoName)
-    {
-        // GitHub API returns commit count in 'size' property for PushEvent
-        var commitCount = activity.Payload?.Size ?? 0;
-        var distinctCount = activity.Payload?.DistinctSize ?? 0;
-        
-        if (commitCount == 0)
-        {
-            // Sometimes commits might be in the Commits list instead
-            commitCount = activity.Payload?.Commits?.Count ?? 0;
-        }
-
-        var branch = GetBranchName(activity.Payload?.Ref);
-        var branchInfo = string.IsNullOrEmpty(branch) ? "" : $" ({branch})";
-
-        if (commitCount == 0)
-        {
-            return $"Pushed to {repoName}{branchInfo}";
-        }
-        else if (distinctCount > 0 && distinctCount != commitCount)
-        {
-            return $"Pushed {commitCount} commits ({distinctCount} distinct) to {repoName}{branchInfo}";
-        }
-        else
-        {
-            return $"Pushed {commitCount} commit{(commitCount != 1 ? "s" : "")} to {repoName}{branchInfo}";
-        }
-    }
-
-    private string GetIssueEventDescription(GitHubEvent activity, string repoName)
-    {
-        var action = activity.Payload?.Action?.ToLower() ?? "modified";
-        var actionText = action switch
-        {
-            "opened" => "📝 Opened",
-            "closed" => "✅ Closed",
-            "reopened" => "🔄 Reopened",
-            "assigned" => "👤 Assigned",
-            "unassigned" => "👤 Unassigned",
-            "labeled" => "🏷️ Labeled",
-            "unlabeled" => "🏷️ Unlabeled",
-            "edited" => "✏️ Edited",
-            "milestoned" => "🎯 Milestoned",
-            "demilestoned" => "🎯 Demilestoned",
-            "locked" => "🔒 Locked",
-            "unlocked" => "🔓 Unlocked",
-            _ => CapitalizeFirstLetter(action)
-        };
-        
-        return $"{actionText} an issue in {repoName}";
-    }
-
-    private string GetIssueCommentEventDescription(GitHubEvent activity, string repoName)
-    {
-        var action = activity.Payload?.Action?.ToLower() ?? "commented";
-        var actionText = action switch
-        {
-            "created" => "💬 Commented",
-            "edited" => "✏️ Edited comment",
-            "deleted" => "🗑️ Deleted comment",
-            _ => CapitalizeFirstLetter(action)
-        };
-        
-        return $"{actionText} on an issue in {repoName}";
     }
 
     private string GetCreateEventDescription(GitHubEvent activity, string repoName)
     {
         var refType = activity.Payload?.RefType?.ToLower() ?? "resource";
-        var emoji = refType switch
-        {
-            "branch" => "🌿",
-            "tag" => "🏷️",
-            "repository" => "📁",
-            _ => "📝"
-        };
-        
         var refName = GetRefName(activity.Payload?.Ref);
-        var refInfo = string.IsNullOrEmpty(refName) ? "" : $" '{refName}'";
         
-        return $"{emoji} Created {refType}{refInfo} in {repoName}";
+        if (!string.IsNullOrEmpty(refName))
+        {
+            if (refType == "branch")
+            {
+                return $"Created {refType} '{refName}' in {repoName}";
+            }
+            else if (refType == "repository")
+            {
+                return $"Created new repository {repoName}";
+            }
+            return $"Created {refType} '{refName}' in {repoName}";
+        }
+        
+        return $"Created {refType} in {repoName}";
     }
 
     private string GetDeleteEventDescription(GitHubEvent activity, string repoName)
     {
         var refType = activity.Payload?.RefType?.ToLower() ?? "resource";
         var refName = GetRefName(activity.Payload?.Ref);
-        var refInfo = string.IsNullOrEmpty(refName) ? "" : $" '{refName}'";
         
-        return $"🗑️ Deleted {refType}{refInfo} in {repoName}";
+        if (!string.IsNullOrEmpty(refName))
+        {
+            return $"Deleted {refType} '{refName}' from {repoName}";
+        }
+        
+        return $"Deleted {refType} from {repoName}";
+    }
+
+    private string GetIssueEventDescription(GitHubEvent activity, string repoName)
+    {
+        var action = activity.Payload?.Action?.ToLower() ?? "modified";
+        
+        return action switch
+        {
+            "opened" => $"Opened a new issue in {repoName}",
+            "closed" => $"Closed an issue in {repoName}",
+            "reopened" => $"Reopened an issue in {repoName}",
+            "edited" => $"Edited an issue in {repoName}",
+            "assigned" => $"Assigned an issue in {repoName}",
+            "unassigned" => $"Unassigned an issue in {repoName}",
+            "labeled" => $"Added label to issue in {repoName}",
+            "unlabeled" => $"Removed label from issue in {repoName}",
+            _ => $"{CapitalizeFirstLetter(action)} an issue in {repoName}"
+        };
     }
 
     private string GetPullRequestEventDescription(GitHubEvent activity, string repoName)
     {
         var action = activity.Payload?.Action?.ToLower() ?? "modified";
-        var actionText = action switch
-        {
-            "opened" => "📦 Opened",
-            "closed" => action == "closed" && activity.Payload?.PullRequest != null 
-                ? (IsPullRequestMerged(activity.Payload.PullRequest) ? "✅ Merged" : "❌ Closed")
-                : "❌ Closed",
-            "reopened" => "🔄 Reopened",
-            "edited" => "✏️ Edited",
-            "assigned" => "👤 Assigned",
-            "unassigned" => "👤 Unassigned",
-            "review_requested" => "👁️ Review requested",
-            "review_request_removed" => "👁️ Review request removed",
-            "ready_for_review" => "👁️ Ready for review",
-            "labeled" => "🏷️ Labeled",
-            "unlabeled" => "🏷️ Unlabeled",
-            "synchronize" => "🔄 Updated",
-            _ => CapitalizeFirstLetter(action)
-        };
         
-        return $"{actionText} a pull request in {repoName}";
-    }
-
-    private string GetPullRequestReviewEventDescription(GitHubEvent activity, string repoName)
-    {
-        var action = activity.Payload?.Action?.ToLower() ?? "reviewed";
-        var actionText = action switch
+        return action switch
         {
-            "submitted" => "👁️ Reviewed",
-            "edited" => "✏️ Edited review",
-            "dismissed" => "❌ Dismissed review",
-            _ => CapitalizeFirstLetter(action)
+            "opened" => $"Opened a pull request in {repoName}",
+            "closed" => $"Closed a pull request in {repoName}",
+            "merged" => $"Merged a pull request in {repoName}",
+            "reopened" => $"Reopened a pull request in {repoName}",
+            "edited" => $"Edited a pull request in {repoName}",
+            "assigned" => $"Assigned a pull request in {repoName}",
+            "unassigned" => $"Unassigned a pull request in {repoName}",
+            "review_requested" => $"Requested review for pull request in {repoName}",
+            "review_request_removed" => $"Removed review request from pull request in {repoName}",
+            _ => $"{CapitalizeFirstLetter(action)} a pull request in {repoName}"
         };
-        
-        return $"{actionText} a pull request in {repoName}";
     }
 
     private string GetReleaseEventDescription(GitHubEvent activity, string repoName)
     {
         var action = activity.Payload?.Action?.ToLower() ?? "published";
-        var actionText = action switch
-        {
-            "published" => "🚀 Published",
-            "unpublished" => "🚀 Unpublished",
-            "created" => "🚀 Created",
-            "edited" => "✏️ Edited",
-            "deleted" => "🗑️ Deleted",
-            "prereleased" => "🚀 Pre-released",
-            "released" => "🚀 Released",
-            _ => CapitalizeFirstLetter(action)
-        };
         
-        return $"{actionText} a release in {repoName}";
+        return action switch
+        {
+            "published" => $"Published a release in {repoName}",
+            "created" => $"Created a release in {repoName}",
+            "edited" => $"Edited a release in {repoName}",
+            "deleted" => $"Deleted a release in {repoName}",
+            "prereleased" => $"Published a prerelease in {repoName}",
+            _ => $"{CapitalizeFirstLetter(action)} a release in {repoName}"
+        };
     }
 
     private string GetMemberEventDescription(GitHubEvent activity, string repoName)
     {
         var action = activity.Payload?.Action?.ToLower() ?? "added";
-        var actionText = action switch
-        {
-            "added" => "👥 Added member to",
-            "removed" => "👥 Removed member from",
-            "edited" => "👥 Edited member in",
-            _ => CapitalizeFirstLetter(action)
-        };
         
-        return $"{actionText} {repoName}";
-    }
-
-    private string GetOrganizationEventDescription(GitHubEvent activity, string repoName)
-    {
-        var action = activity.Payload?.Action?.ToLower() ?? "updated";
-        return $"{CapitalizeFirstLetter(action)} organization {repoName}";
+        return action switch
+        {
+            "added" => $"Added a member to {repoName}",
+            "removed" => $"Removed a member from {repoName}",
+            "edited" => $"Edited member permissions in {repoName}",
+            _ => $"{CapitalizeFirstLetter(action)} a member in {repoName}"
+        };
     }
 
     private string GetGenericEventDescription(GitHubEvent activity, string repoName)
     {
-        var readableType = activity.Type
-            .Replace("Event", "")
-            .Replace("([A-Z])", " $1")
-            .ToLower();
+        var readableType = activity.Type.Replace("Event", "").ToLower();
+        
+        // Add spaces before capital letters (camelCase to words)
+        readableType = System.Text.RegularExpressions.Regex.Replace(
+            readableType, 
+            "([a-z])([A-Z])", 
+            "$1 $2"
+        );
         
         return $"{CapitalizeFirstLetter(readableType)} in {repoName}";
     }
@@ -276,22 +283,6 @@ public class ActivityPrinter : IActivityPrinter
 
         var branchName = GetBranchName(refString);
         return branchName == refString ? "" : branchName;
-    }
-
-    private bool IsPullRequestMerged(object? pullRequest)
-    {
-        // This is a simplified check. In a real implementation,
-        // you'd want to deserialize the pull_request object properly
-        try
-        {
-            var prJson = pullRequest?.ToString();
-            return prJson?.Contains("\"merged\": true") == true || 
-                   prJson?.Contains("'merged': True") == true;
-        }
-        catch
-        {
-            return false;
-        }
     }
 
     private string CapitalizeFirstLetter(string input)
