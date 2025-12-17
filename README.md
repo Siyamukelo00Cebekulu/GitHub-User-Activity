@@ -43,25 +43,26 @@ https://api.github.com/users/{username}/events
 
     The program formats and prints the data neatly to the terminal, providing a clear summary of the user’s latest activity.
 
-## 🧰 Technologies Used
+## 🧰 Technologies and Libraries Used
 
 - C# (.NET 6 or later)
 - HttpClient for sending HTTP requests
 - System.Text.Json for parsing JSON data
+- System.Text.Json.Serialization
+- System.CommandLine
 - Command-line interface (CLI) for user interaction
 
 ## 🧑‍💻 Example Output
 
 ```yaml
-Enter GitHub username: Siyamukelo00Cebekulu
-Fetching recent activity...
+Fetching recent activity for Siyamukelo00Cebekulu...
 
-[1] PushEvent on repo: Siyamukelo00Cebekulu/TaskTracker
-    Date: 2025-11-08T14:20:11Z
+Recent GitHub Activity:
 
-[2] CreateEvent on repo: Siyamukelo00Cebekulu/Portfolio
-    Date: 2025-11-07T18:05:49Z
-
-[3] WatchEvent on repo: dotnet/runtime
-    Date: 2025-11-07T16:22:33Z
+- Pushed 5 commits to Siyamukelo00Cebekulu/Siyamukelo00Cebekulu (main)
+- Pushed 6 commits to Siyamukelo00Cebekulu/shiny-octo-train (main)
+- Created branch 'main' in Siyamukelo00Cebekulu/shiny-octo-train
+- Pushed 4 commits to Siyamukelo00Cebekulu/GitHub-User-Activity (master)
+- Pushed 12 commits to Siyamukelo00Cebekulu/react-native-technical-assessment (main)
+- Made repository Siyamukelo00Cebekulu/react-native-technical-assessment public
 ```
